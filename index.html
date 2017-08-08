@@ -67,7 +67,7 @@ u2f = {};
   };
 
   u2f.Port.prototype.send = function(data) {
-    return this.device_.transferOut(4, data);
+    return this.device_.transferOut(1, data);
   };
 })();
 
