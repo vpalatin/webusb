@@ -43,7 +43,7 @@ u2f = {};
         .then(() => this.device_.claimInterface(0))
         .then(() => this.device_.transferOut(
               1,
-              new Uint8Array(64))
+              new Uint8Array(64)))
         .then(() => {
           readLoop();
         });
