@@ -28,7 +28,7 @@ u2f = {};
 
   u2f.Port.prototype.connect = function() {
     let readLoop = () => {
-      this.device_.transferIn(1, 64).then(result => {
+      this.device_.transferIn(1, 2048).then(result => {
         this.onReceive(result.data);
         readLoop();
       }, error => {
@@ -44,12 +44,14 @@ u2f = {};
         })
         .then(() => this.device_.claimInterface(0))
         .then(() => {
-          var cmd = new Uint8Array(64);
+          var cmd = new Uint8Array(4+3+8);
           cmd[0] = 0xff;
           cmd[1] = 0xff;
           cmd[2] = 0xff;
           cmd[3] = 0xff;
           cmd[4] = 0x86;  // INIT
+          cmd[5] = 0; // bcnth
+          cmd[6] = 8; // bcntl
           this.device_.transferOut(
               1,
               cmd);
@@ -110,7 +112,8 @@ u2f = {};
         return;
       }
 
-      let view = new Uint8Array(64);
+      let view = new Uint8Array(5);
+      view[0] = 1; // CID
       view[4] = 0x85; // SYSINFO
       /*
       view[0] = parseInt(redSlider.value);
