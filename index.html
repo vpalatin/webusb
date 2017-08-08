@@ -43,9 +43,17 @@ u2f = {};
           }
         })
         .then(() => this.device_.claimInterface(0))
-        .then(() => this.device_.transferOut(
+        .then(() => {
+          var cmd = new Uint8Array(64);
+          cmd[0] = 0xff;
+          cmd[1] = 0xff;
+          cmd[2] = 0xff;
+          cmd[3] = 0xff;
+          cmd[4] = 0x86;  // INIT
+          this.device_.transferOut(
               1,
-              new Uint8Array(64)))
+              cmd);
+        })
         .then(() => {
           readLoop();
         });
@@ -81,8 +89,7 @@ u2f = {};
         connectButton.textContent = 'Disconnect';
 
         port.onReceive = data => {
-          let textDecoder = new TextDecoder();
-          console.log(textDecoder.decode(data));
+          console.log(new Uint8Array(data));
         }
         port.onReceiveError = error => {
           console.error(error);
@@ -97,10 +104,13 @@ u2f = {};
         return;
       }
 
-      let view = new Uint8Array(3);
+      let view = new Uint8Array(64);
+      view[4] = 0x85; // SYSINFO
+      /*
       view[0] = parseInt(redSlider.value);
       view[1] = parseInt(greenSlider.value);
       view[2] = parseInt(blueSlider.value);
+      */
       port.send(view);
     };
 
