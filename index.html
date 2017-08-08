@@ -23,6 +23,7 @@ u2f = {};
 
   u2f.Port = function(device) {
     this.device_ = device;
+    console.log(device);
   };
 
   u2f.Port.prototype.connect = function() {
