@@ -26,7 +26,7 @@ u2f = {};
 
   u2f.Port.prototype.connect = function() {
     let readLoop = () => {
-      this.device_.transferIn(5, 64).then(result => {
+      this.device_.transferIn(1, 64).then(result => {
         this.onReceive(result.data);
         readLoop();
       }, error => {
@@ -40,25 +40,19 @@ u2f = {};
             return this.device_.selectConfiguration(1);
           }
         })
-        .then(() => this.device_.claimInterface(1))
-        .then(() => this.device_.controlTransferOut({
-            'requestType': 'class',
-            'recipient': 'interface',
-            'request': 0x22,
-            'value': 0x01,
-            'index': 0x02}))
+        .then(() => this.device_.claimInterface(0))
+        .then(() => this.device_.transferOut(
+              1,
+              new Uint8Array(64))
         .then(() => {
           readLoop();
         });
   };
 
   u2f.Port.prototype.disconnect = function() {
-    return this.device_.controlTransferOut({
-            'requestType': 'class',
-            'recipient': 'interface',
-            'request': 0x22,
-            'value': 0x00,
-            'index': 0x02})
+    return this.device_.transferOut(
+            1,
+            new Uint8Array(64))
         .then(() => this.device_.close());
   };
 
