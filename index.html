@@ -62,10 +62,7 @@ u2f = {};
   };
 
   u2f.Port.prototype.disconnect = function() {
-    return this.device_.transferOut(
-            1,
-            new Uint8Array(64))
-        .then(() => this.device_.close());
+    return this.device_.close();
   };
 
   u2f.Port.prototype.send = function(data) {
@@ -80,9 +77,7 @@ u2f = {};
   document.addEventListener('DOMContentLoaded', event => {
     let connectButton = document.querySelector("#connect");
     let statusDisplay = document.querySelector('#status');
-    let redSlider = document.querySelector('#red');
-    let greenSlider = document.querySelector('#green');
-    let blueSlider = document.querySelector('#blue');
+    let infoButton = document.querySelector('#info');
     let port;
 
     function connect() {
@@ -112,20 +107,15 @@ u2f = {};
         return;
       }
 
-      let view = new Uint8Array(5);
-      view[0] = 1; // CID
+      let view = new Uint8Array(7);
+      view[0] = 1; // CID != 0
       view[4] = 0x85; // SYSINFO
-      /*
-      view[0] = parseInt(redSlider.value);
-      view[1] = parseInt(greenSlider.value);
-      view[2] = parseInt(blueSlider.value);
-      */
+      view[6] = 0;
+      view[7] = 0;
       port.send(view);
     };
 
-    redSlider.addEventListener('input', onUpdate);
-    greenSlider.addEventListener('input', onUpdate);
-    blueSlider.addEventListener('input', onUpdate);
+    infoButton.addEventListener('click', onUpdate);
 
     connectButton.addEventListener('click', function() {
       if (port) {
@@ -159,10 +149,9 @@ u2f = {};
 <body>
 Look at console?
     <p>
-      <button id="connect">Connect</button> <span id="status"></span>
+      <button id="connect">Connect</button>
+      <button id="info">Info</button>
+      <span id="status"></span>
     </p>
-    <input type="range" min="0" max="255" value="0" id="red"/>
-    <input type="range" min="0" max="255" value="0" id="green"/>
-    <input type="range" min="0" max="255" value="0" id="blue"/>
 </body>
 </html>
