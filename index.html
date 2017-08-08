@@ -40,7 +40,7 @@ u2f = {};
             return this.device_.selectConfiguration(1);
           }
         })
-        .then(() => this.device_.claimInterface(2))
+        .then(() => this.device_.claimInterface(1))
         .then(() => this.device_.controlTransferOut({
             'requestType': 'class',
             'recipient': 'interface',
