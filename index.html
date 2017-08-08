@@ -1,1 +1,73 @@
-Hello there!
+<html><head><script>
+u2f = {};
+
+(function() {
+  'use strict';
+
+  u2f.getPorts = function() {
+    return navigator.usb.getDevices().then(devices => {
+      return devices.map(device => new u2f.Port(device));
+    });
+  };
+
+  u2f.requestPort = function() {
+    const filters = [
+      { 'vendorId': 0x18d1, 'productId': 0x5026 },
+    ];
+    return navigator.usb.requestDevice({ 'filters': filters }).then(
+      device => new u2f.Port(device)
+    );
+  }
+
+  u2f.Port = function(device) {
+    this.device_ = device;
+  };
+
+  u2f.Port.prototype.connect = function() {
+    let readLoop = () => {
+      this.device_.transferIn(5, 64).then(result => {
+        this.onReceive(result.data);
+        readLoop();
+      }, error => {
+        this.onReceiveError(error);
+      });
+    };
+
+    return this.device_.open()
+        .then(() => {
+          if (this.device_.configuration === null) {
+            return this.device_.selectConfiguration(1);
+          }
+        })
+        .then(() => this.device_.claimInterface(2))
+        .then(() => this.device_.controlTransferOut({
+            'requestType': 'class',
+            'recipient': 'interface',
+            'request': 0x22,
+            'value': 0x01,
+            'index': 0x02}))
+        .then(() => {
+          readLoop();
+        });
+  };
+
+  u2f.Port.prototype.disconnect = function() {
+    return this.device_.controlTransferOut({
+            'requestType': 'class',
+            'recipient': 'interface',
+            'request': 0x22,
+            'value': 0x00,
+            'index': 0x02})
+        .then(() => this.device_.close());
+  };
+
+  u2f.Port.prototype.send = function(data) {
+    return this.device_.transferOut(4, data);
+  };
+})();
+</script>
+</head>
+<body>
+Look at console?
+</body>
+</html>
