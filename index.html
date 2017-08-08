@@ -90,7 +90,7 @@ u2f = {};
 
         port.onReceive = data => {
           var u8 = new Uint8Array(data);
-          var s = '<';
+          var s = '<[' + u8.length + ']:';
           for (var i = 0; i < u8.length; ++i) {
             s += ('0123456789abcdef'.charAt(u8[i] >> 4));
             s += ('0123456789abcdef'.charAt(u8[i] & 15));
