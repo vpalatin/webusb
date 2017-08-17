@@ -21,6 +21,16 @@ u2f = {};
     );
   }
 
+  u2f.log = function(dir, data) {
+    var u8 = new Uint8Array(data.buffer);
+    var s = '' + dir + '[' + u8.length + ']:';
+    for (var i = 0; i < u8.length; ++i) {
+      s += ('0123456789abcdef'.charAt(u8[i] >> 4));
+      s += ('0123456789abcdef'.charAt(u8[i] & 15));
+    }
+    console.log(s);
+  }
+
   u2f.Port = function(device) {
     this.device_ = device;
     console.log(device);
@@ -29,6 +39,7 @@ u2f = {};
   u2f.Port.prototype.connect = function() {
     let readLoop = () => {
       this.device_.transferIn(1, 2048).then(result => {
+        u2f.log('<', result.data);
         this.onReceive(result.data);
         readLoop();
       }, error => {
@@ -49,12 +60,10 @@ u2f = {};
           cmd[1] = 0xff;
           cmd[2] = 0xff;
           cmd[3] = 0xff;
-          cmd[4] = 0x86;  // INIT
-          cmd[5] = 0; // bcnth
-          cmd[6] = 8; // bcntl
-          this.device_.transferOut(
-              1,
-              cmd);
+          cmd[4] = 0x86; // INIT
+          cmd[5] = 0;    // bcnth
+          cmd[6] = 8;    // bcntl
+          this.send(cmd);
         })
         .then(() => {
           readLoop();
@@ -66,6 +75,7 @@ u2f = {};
   };
 
   u2f.Port.prototype.send = function(data) {
+    u2f.log('>', data);
     return this.device_.transferOut(1, data);
   };
 })();
@@ -86,17 +96,11 @@ u2f = {};
         connectButton.textContent = 'Disconnect';
 
         port.onReceive = data => {
-          var u8 = new Uint8Array(data.buffer);
-          var s = '<[' + u8.length + ']:';
-          for (var i = 0; i < u8.length; ++i) {
-            s += ('0123456789abcdef'.charAt(u8[i] >> 4));
-            s += ('0123456789abcdef'.charAt(u8[i] & 15));
-          }
-          console.log(s);
+          // do something w/ data.buffer
         }
         port.onReceiveError = error => {
           console.error(error);
-        };
+        }
       }, error => {
         statusDisplay.textContent = error;
       });
@@ -107,12 +111,12 @@ u2f = {};
         return;
       }
 
-      let view = new Uint8Array(7);
-      view[0] = 1; // CID != 0
-      view[4] = 0x85; // SYSINFO
-      view[6] = 0;
-      view[7] = 0;
-      port.send(view);
+      let u8 = new Uint8Array(7);
+      u8[0] = 1;    // CID != 0
+      u8[4] = 0x85; // SYSINFO
+      u8[6] = 0;
+      u8[7] = 0;
+      port.send(u8);
     };
 
     infoButton.addEventListener('click', onUpdate);
