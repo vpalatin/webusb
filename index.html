@@ -23,11 +23,16 @@ u2f = {};
 
   u2f.log = function(dir, data) {
     var u8 = new Uint8Array(data.buffer);
+    // hexdump
     var s = '' + dir + '[' + u8.length + ']:';
     for (var i = 0; i < u8.length; ++i) {
       s += ('0123456789abcdef'.charAt(u8[i] >> 4));
       s += ('0123456789abcdef'.charAt(u8[i] & 15));
     }
+    // to textarea
+    var log = document.getElementById('log');
+    log.value = log.value + '' + s;
+    // and console
     console.log(s);
   }
 
@@ -151,11 +156,11 @@ u2f = {};
 </script>
 </head>
 <body>
-Look at console?
     <p>
       <button id="connect">Connect</button>
       <button id="info">Info</button>
       <span id="status"></span>
     </p>
+    <textarea id="log" readonly cols="80" rows="25"></textarea>
 </body>
 </html>
