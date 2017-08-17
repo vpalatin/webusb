@@ -14,12 +14,11 @@ u2f = {};
   u2f.requestPort = function() {
     const filters = [
       { 'vendorId': 0x1050, 'productId': 0x0211 }, // winusb
-      { 'vendorId': 0x18d1, 'productId': 0x5026 }, // hid
     ];
     return navigator.usb.requestDevice({ 'filters': filters }).then(
       device => new u2f.Port(device)
     );
-  }
+  };
 
   u2f.log = function(dir, data) {
     var u8 = new Uint8Array(data.buffer);
@@ -31,10 +30,10 @@ u2f = {};
     }
     // to textarea
     var log = document.getElementById('log');
-    log.value = log.value + '' + s;
+    log.value = log.value + '' + s + '\r\n';
     // and console
     console.log(s);
-  }
+  };
 
   u2f.Port = function(device) {
     this.device_ = device;
@@ -122,7 +121,7 @@ u2f = {};
       u8[6] = 0;
       u8[7] = 0;
       port.send(u8);
-    };
+    }
 
     infoButton.addEventListener('click', onUpdate);
 
@@ -161,6 +160,6 @@ u2f = {};
       <button id="info">Info</button>
       <span id="status"></span>
     </p>
-    <textarea id="log" readonly cols="80" rows="25"></textarea>
+    <textarea id="log" readonly cols="120" rows="50"></textarea>
 </body>
 </html>
