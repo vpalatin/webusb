@@ -14,6 +14,7 @@ u2f = {};
   u2f.requestPort = function() {
     const filters = [
       { 'vendorId': 0x1050, 'productId': 0x0211 }, // winusb
+      { 'vendorId': 0x18d1, 'productId': 0x5026 }, // hg (use 2nd interface)
     ];
     return navigator.usb.requestDevice({ 'filters': filters }).then(
       device => new u2f.Port(device)
@@ -42,7 +43,7 @@ u2f = {};
 
   u2f.Port.prototype.connect = function() {
     let readLoop = () => {
-      this.device_.transferIn(1, 2048).then(result => {
+      this.device_.transferIn(this.epIn_, this.packetSize_).then(result => {
         u2f.log('<', result.data);
         this.onReceive(result.data);
         readLoop();
@@ -57,7 +58,30 @@ u2f = {};
             return this.device_.selectConfiguration(0);
           }
         })
-        .then(() => this.device_.claimInterface(0))
+        .then(() => {
+          // Default to the first interface if there is no vendor one
+          var ifaces = this.device_.configuration.interfaces;
+          var vendor = ifaces[0];
+          for (var iface in ifaces) {
+            if (ifaces[iface].alternates[0].interfaceClass == 255) {
+              vendor = ifaces[iface];
+              break;
+            }
+          }
+          console.log(vendor);
+          this.ifaceNum_ = vendor.interfaceNumber;
+          var eps = vendor.alternates[0].endpoints;
+          this.epIn_ = 1;
+          this.epOut_ = 1;
+          for (var ep in eps) {
+            if (eps[ep].direction == "in" && eps[ep].type == "bulk")
+              this.epIn_ = eps[ep].endpointNumber;
+            if (eps[ep].direction == "out" && eps[ep].type == "bulk")
+              this.epOut_ = eps[ep].endpointNumber;
+          }
+          this.inSize_ = eps[this.epIn_.packetSize;
+        })
+        .then(() => this.device_.claimInterface(this.ifaceNum_))
         .then(() => {
           var cmd = new Uint8Array(4+3+8);
           cmd[0] = 0xff;
@@ -80,7 +104,7 @@ u2f = {};
 
   u2f.Port.prototype.send = function(data) {
     u2f.log('>', data);
-    return this.device_.transferOut(1, data);
+    return this.device_.transferOut(this.epOut_, data);
   };
 })();
 
